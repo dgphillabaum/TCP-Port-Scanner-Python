@@ -1,0 +1,44 @@
+##########################################################
+#                                                        #
+#                Devin's TCP Port Scanner                # 
+#      IT-567 Cybersecurity and Penetration Testing      #
+#   Dr. Dale Rowe, Professor of Information Technology   #
+#                BYU School of Technology                #
+#                                                        #
+##########################################################
+
+import socket
+import sys
+import logging
+import scapy
+from scapy.all import *
+
+ipaddress = raw_input("Enter IP address of host to be port scanned: ") #user inputs IP address of host to be TCP port scanned
+
+porttobescanned = input("Enter port to be scanned: ") #user inputs port to be scanned
+
+src_port = 11111
+
+logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
+
+s = socket.socket(2,1)
+
+def porttry(ipaddress, porttobescanned):
+	try:
+		s.connect((ipaddress, porttobescanned))
+		return True
+	except:
+		return None
+
+for port in range(porttobescanned, porttobescanned+1):
+	tcp_connect_scan_resp = sr1(IP(host=ipaddress)/TCP(sport=src_port, dport=porttobescanned, flags = "S"), timeout = 10)
+	if(str(type(tcp_connect_scan_resp))=="<type 'NoneType'>"):
+		print("Port closed on %d" % port)
+	elif(tcp_connect_scan_resp.haslayer(TCP)):
+		if(tcp_connect_scan_resp.getlayer(TCP).flags == 0x12):
+			send_rst = sr(IP(dst=ipaddress)/TCP(sport=src_port, dport=porttobescanned, flags = "AR"), timeout = 10)
+			print("Port **OPENED** on %d" % port)
+		elif(tcp_connect_scan_resp.getlayer(TCP).flags == 0x14):
+			print("Port closed on %d" % port)
+
+raw_input()
